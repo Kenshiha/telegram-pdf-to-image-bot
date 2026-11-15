@@ -3,8 +3,10 @@ public class SimpleJsonParser {
     // Helper method to extract a long value given a key (like chat id)
     public static long extractLong(String json, String key){
 
+
         String searchKey = "\"" + key + "\":";
         int index = json.indexOf(searchKey);
+
         if(index == -1) return -1;
 
         int startIndex = index + searchKey.length();
@@ -12,11 +14,14 @@ public class SimpleJsonParser {
 
         // Read character until we hit a comma, closing brace, or whitespace
         while(endIndex < json.length()){
+
             char c = json.charAt(endIndex);
+
             if( c == ',' || c == '}' || c == ' ' || c == '\n' || c == '\r'){
                 break;
             }
             endIndex++;
+
         }
 
         try {

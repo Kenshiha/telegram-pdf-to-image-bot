@@ -14,6 +14,7 @@ public class TelegramApiClient {
 
     // GET MESSAGE : ask telegram for new msg
     public String getUpdates(long offset){
+
         String url = "https://api.telegram.org/bot" + botToken + "/getUpdates?offset=" + offset + "&timeout=5";
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -27,9 +28,12 @@ public class TelegramApiClient {
         } catch (Exception e){
             System.err.println("Error Fetching updates: " + e.getMessage());
             return null;
+
         }
     }
+
     //SEND MESSAGE: sends a raw json post request to reply user
+
     public String sendMessage(long chatId, String text){
         String url = "https://api.telegram.org/bot" + botToken + "/sendMessage";
 
