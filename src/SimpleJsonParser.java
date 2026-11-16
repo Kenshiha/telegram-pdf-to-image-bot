@@ -4,20 +4,25 @@ public class SimpleJsonParser {
     public static long extractLong(String json, String key){
 
 
-        String searchKey = "\"" + key + "\":";
+        String searchKey = "\"" + key + "\"";
         int index = json.indexOf(searchKey);
-
         if(index == -1) return -1;
 
-        int startIndex = index + searchKey.length();
-        int endIndex = startIndex;
+        int colonIndex = json.indexOf(':' , index + searchKey.length());
+        if(colonIndex == -1) return -1;
 
+        int startIndex = colonIndex + 1;
+        while (startIndex < json.length() && Character.isWhitespace(json.charAt(startIndex))){
+            startIndex++;
+        }
+
+        int endIndex = startIndex;
         // Read character until we hit a comma, closing brace, or whitespace
         while(endIndex < json.length()){
 
             char c = json.charAt(endIndex);
 
-            if( c == ',' || c == '}' || c == ' ' || c == '\n' || c == '\r'){
+            if( c == ',' || c == '}' || c == ']' || Character.isWhitespace(c)){
                 break;
             }
             endIndex++;
@@ -34,11 +39,17 @@ public class SimpleJsonParser {
 
     // Helper method to extract string value (like msg text) given a key
     public static String extractString(String json, String key){
-        String searchKey = "\"" + key + "\":\"";
+        String searchKey = "\"" + key + "\"";
         int index = json.indexOf(searchKey);
         if(index == -1) return null;
 
-        int startIndex = index + searchKey.length();
+        int colonIndex = json.indexOf(':' , index + searchKey.length());
+        if(colonIndex == -1) return null;
+
+        int quoteIndex = json.indexOf('"' , colonIndex + 1);
+        if(quoteIndex == -1) return null;
+
+        int startIndex = quoteIndex + 1;
         int endIndex = startIndex;
 
         while (endIndex < json.length()){

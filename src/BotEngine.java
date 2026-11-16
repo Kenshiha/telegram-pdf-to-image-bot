@@ -17,21 +17,27 @@ public class BotEngine {
             try {
                 // 1 Fetch raw JSON updates from telegram using our network client
                 String jsonResponse = apiClient.getUpdates(currentOffset);
+                //System.out.println("[Debug JSON] " + jsonResponse);
 
-                if (jsonResponse != null && !jsonResponse.isEmpty()){
+                if (jsonResponse != null && jsonResponse.contains("update_id")){
                     long updateId = SimpleJsonParser.extractLong(jsonResponse, "update_id");
 
                     if (updateId != -1){
                         currentOffset = updateId + 1;
 
                         // Extract chat_id and msg text manually
-                        long chatId = SimpleJsonParser.extractLong(jsonResponse, "Id");
+                        long chatId = SimpleJsonParser.extractLong(jsonResponse, "id");
                         String messageText = SimpleJsonParser.extractString(jsonResponse, "text");
 
                         if(chatId != -1 && messageText != null){
                             System.out.println("[Received] Chat ID: " + chatId + " | Message: "+ messageText);
 
-                            String replyText = "You said: " + messageText;
+                            String replyText;
+                            if(messageText.equalsIgnoreCase("/start") || messageText.equalsIgnoreCase("hello")){
+                                replyText = "Welcome! 📄✨\n\nI am your PDF-to-Image bot. Send me any **PDF document**, and I will convert each page into high-quality images and send them right back to you!";
+                            }else {
+                                replyText = "Please upload a **PDF file** to begin conversion!";
+                            }
                             apiClient.sendMessage(chatId, replyText);
                         }
                     }

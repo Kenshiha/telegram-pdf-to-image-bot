@@ -29,5 +29,7 @@ public class Main {
             System.out.println("\n[System] Shutting down bot grcefully..");
             engine.stop();
         }));
+
+        engine.start();
     }
 }
