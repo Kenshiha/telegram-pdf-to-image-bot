@@ -46,6 +46,54 @@ public class BotEngine {
 
                                 if(fileName.toLowerCase().endsWith(".pdf")){
                                     apiClient.sendMessage(chatId, " PDF received: " + fileName + " Preparing to convert...");
+
+                                    String filePath = apiClient.getFilePath(fileId);
+                                    if(filePath != null){
+                                        java.io.File downloadedPdf = apiClient.downloadPdfFile(filePath, fileName);
+
+
+                                        if(downloadedPdf != null && downloadedPdf.exists()){
+                                            System.out.println("[Debug] Downloaded file size: " + downloadedPdf.length() + " bytes");
+
+//                                            try {
+//                                                String fileContent = new String(java.nio.file.Files.readAllBytes(downloadedPdf.toPath()), java.nio.charset.StandardCharsets.UTF_8);
+//                                                System.out.println("[Debug File Content]: " + fileContent);
+//                                            } catch (Exception e) {
+//                                                // Ignore if binary
+//                                            }
+
+                                            java.util.List<java.io.File> renderedImage = PdfConverter.convertPdfToImages(downloadedPdf);
+
+                                            if(!renderedImage.isEmpty()){
+                                                apiClient.sendMessage(chatId, "Converted " + renderedImage.size() + " page(s). Sending images...");
+
+                                                //Loop through each images to send it to user
+                                                for(java.io.File img : renderedImage){
+                                                    if(img.exists()) {
+                                                        //apiClient.sendMessage(chatId, "Sending Images please wait...");
+                                                        apiClient.sendPhoto(chatId, img);
+
+                                                        try {
+                                                            Thread.sleep(300);
+                                                        }catch (InterruptedException e){
+                                                            Thread.currentThread().interrupt();
+                                                        }
+
+                                                    }else {
+                                                        System.err.println("[Error] Image file missing on disk: " + img.getAbsolutePath());
+                                                    }
+                                                }
+                                                apiClient.sendMessage(chatId, "All Pages sent successfullt!");
+                                            }else {
+                                                apiClient.sendMessage(chatId, "Failed to render pages from this PDF.");
+                                            }
+
+                                        }else {
+                                            apiClient.sendMessage(chatId, "Failed to saved file");
+                                        }
+                                    }else{
+                                        apiClient.sendMessage(chatId, "Could not Retrive file path from telegram");
+                                    }
                                 }else {
                                     apiClient.sendMessage(chatId, "That Does not Look like PDF. Please upload a valid .pdf file.");
                                 }

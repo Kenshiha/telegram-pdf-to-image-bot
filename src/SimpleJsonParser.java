@@ -66,17 +66,63 @@ public class SimpleJsonParser {
         int docIndex = json.indexOf("\"document\"");
         if(docIndex == -1) return null;
 
+        int braceDepth = 0;
+        int closeBraceIndex = -1;
+        boolean insideDoc = false;
+        for(int i = docIndex; i < json.length(); i++){
+            char c = json.charAt(i);
+            if(c == '{'){
+                if(!insideDoc) insideDoc = true;
+                braceDepth++;
+            } else if (c == '}') {
+                braceDepth--;
+                if (insideDoc && braceDepth == 0){
+                    closeBraceIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if(closeBraceIndex == -1) closeBraceIndex = json.length();
+
+        int searchStartIndex = docIndex;
+        if (fieldName.equals("file_id")){
+            int thumbIndex = json.indexOf("\"thumb\"", docIndex);
+            if(thumbIndex != -1 && thumbIndex < closeBraceIndex){
+                int thumbDepth = 0;
+                int thumbClose = -1;
+                for (int i = thumbIndex; i < json.length(); i++){
+                    char c = json.charAt(i);
+                    if(c == '{'){
+                        thumbDepth++;
+                    } else if (c == '}') {
+                        thumbDepth--;
+                        if(thumbDepth == 0){
+                            thumbClose = i;
+                            break;
+                        }
+                    }
+                }
+                if(thumbClose != -1){
+                    searchStartIndex = thumbClose;
+                }
+            }
+        }
+
+
         String searchKey = "\"" + fieldName + "\"";
-        int index = json.indexOf(searchKey, docIndex);
-        if(index == -1) return null;
+        int index = json.indexOf(searchKey, searchStartIndex);
+        if(index == -1 || index > closeBraceIndex) return null;
 
         int colonIndex = json.indexOf(':' , index + searchKey.length());
         if (colonIndex == -1) return null;
 
-        int quoteIndex = json.indexOf('"', colonIndex + 1);
-        if (quoteIndex == -1) return null;
+       // int quoteIndex = json.indexOf(':', colonIndex);
 
-        int startIndex = quoteIndex + 1;
+        int valStartQuote = json.indexOf('"', colonIndex);
+        if (valStartQuote == -1) return null;
+
+        int startIndex = valStartQuote + 1;
         int endIndex = startIndex;
 
         while (endIndex < json.length()){
