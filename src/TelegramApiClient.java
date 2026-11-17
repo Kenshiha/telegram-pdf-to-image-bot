@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -50,6 +51,31 @@ public class TelegramApiClient {
             return response.body();
         }catch (Exception e){
             System.err.println("Error sending message: " + e.getMessage());
+            return null;
+        }
+    }
+
+    // GetFilePath
+    public String getFilePath(String fileId){
+        try {
+            String urlString = "https://api.telegram.org/bot" + botToken + "/getFile?file_id" + fileId;
+            java.net.URL url = new java.net.URL(urlString);
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+
+            try {
+                java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null){
+                    response.append(line);
+                }
+                return SimpleJsonParser.extractString(response.toString(), "file_path");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (Exception e){
+            System.err.println("[ERROR] failed to get file path " + e.getMessage());
             return null;
         }
     }
