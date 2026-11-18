@@ -30,3 +30,4 @@ bin/
 .DS_Store
 
 config.properties
+extracted_pages/
