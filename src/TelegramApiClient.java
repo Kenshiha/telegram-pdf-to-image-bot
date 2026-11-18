@@ -1,12 +1,10 @@
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
-import java.net.URI;
+import java.io.*;
+import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.sql.SQLOutput;
+import java.util.List;
 
 public class TelegramApiClient {
     private final String botToken;
@@ -115,6 +113,108 @@ public class TelegramApiClient {
         }
     }
 
+    //Sending Photo in album to minimize the http POST request.
+    public void sendMediaGroupAsAlbum(String chatId, List<File> imageFile){
+        for(int i = 0; i < imageFile.size(); i += 10){
+            List<File> batch = imageFile.subList(i, Math.min(i + 10, imageFile.size()));
+            //sending album
+            sendSingleAlbum(chatId,batch);
+
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    public void sendSingleAlbum(String chatId, List<File> batch){
+        String boundary = "===" + System.currentTimeMillis() + "===";
+        String urlString = "https://api.telegram.org/bot" + botToken + "/sendMediaGroup";
+
+        try {
+            URL url = new URL(urlString);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setDoOutput(true);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+            try (OutputStream outputStream = conn.getOutputStream();
+                 PrintWriter writer = new PrintWriter(new OutputStreamWriter(outputStream, "UTF-8"), true))
+            {
+                //1. Write chat id
+                writer.append("--").append(boundary).append("\r\n");
+                writer.append("Content-Disposition: form-data; name=\"chat_id\"\r\n\r\n");
+                writer.append(chatId).append("\r\n");
+
+                //2. Build JSON array defining the media
+                StringBuilder jsonMedia = new StringBuilder("[");
+                for (int j = 0; j < batch.size(); j++){
+                    if(j > 0) jsonMedia.append(",");
+                    jsonMedia.append("{\"type\":\"photo\",\"media\":\"attach://photo").append(j).append("\"}");
+                }
+                jsonMedia.append("]");
+
+                writer.append("--").append(boundary).append("\r\n");
+                writer.append("Content-Disposition: form-data; name=\"media\"\r\n\r\n");
+                writer.append(jsonMedia.toString()).append("\r\n");
+
+                //3. Attach each physical image file bytes with corresponding field name
+                for(int j = 0; j < batch.size(); j++){
+                    File file = batch.get(j);
+                    writer.append("--").append(boundary).append("\r\n");
+                    writer.append("Content-Disposition: form-data; name=\"photo")
+                            .append(String.valueOf(j)).append("\"; filename=\"").append(file.getName()).append("\"\r\n");
+                    writer.append("Content-Type: image/png\r\n\r\n");
+                    writer.flush();
+
+                    try {
+                        FileInputStream inputStream = new FileInputStream(file);
+                        byte[] buffer= new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = inputStream.read(buffer)) != -1){
+                            if (bytesRead > 0){
+                                outputStream.write(buffer, 0, bytesRead);
+                            }
+                        }
+                        outputStream.flush();
+                    } catch (FileNotFoundException e) {
+                        throw new RuntimeException(e);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    writer.append("\r\n");
+                    writer.flush();
+                }
+
+                //End multipart boundary
+                writer.append("--").append(boundary).append("--\r\n");
+                writer.flush();
+            }
+
+            int responseCode = conn.getResponseCode();
+            if(responseCode == 200){
+                System.out.println("[TelegramApiClient] successfully sent album batch of " + batch.size() + "image.");
+            } else {
+                System.err.println("[Error] Failed to send media group. Response code " + responseCode);
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "UTF-8"))){
+                    StringBuilder errorBody = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null){
+                        errorBody.append(line.trim());
+                    }
+                    System.err.println("[Error Body]: " + errorBody.toString());
+                } catch (Exception ignored) {}
+            }
+        }catch (Exception e){
+            System.err.println("[Error] Exception while sending media group: " + e.getMessage());
+        }
+    }
+
+
+
+
+    //This sends photo one by one causing spam of POST request , so won't work when PDF has lots of pages
     public void sendPhoto(long chatId, java.io.File imageFile){
         String boundary = "===" + System.currentTimeMillis() + "===";
         String lineEnd = "\r\n";
