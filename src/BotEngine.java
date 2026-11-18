@@ -36,9 +36,9 @@ public class BotEngine {
 
                                 String replyText;
                                 if (messageText.equalsIgnoreCase("/start") || messageText.equalsIgnoreCase("hello")) {
-                                    replyText = "Welcome! 📄✨\n\nI am your PDF-to-Image bot. Send me any **PDF document**, and I will convert each page into high-quality images and send them right back to you!";
+                                    replyText = "Welcome! 📄✨\n\nI am your PDF-to-Image bot. Send me any PDF document, and I will convert each page into high-quality images and send them right back to you!";
                                 } else {
-                                    replyText = "Please upload a **PDF file** to begin conversion!";
+                                    replyText = "Please upload a PDF file to begin conversion!";
                                 }
                                 apiClient.sendMessage(chatId, replyText);
                             } else if (fileId != null && fileName != null) {
@@ -67,22 +67,23 @@ public class BotEngine {
                                             if(!renderedImage.isEmpty()){
                                                 apiClient.sendMessage(chatId, "Converted " + renderedImage.size() + " page(s). Sending images...");
 
+                                                apiClient.sendMediaGroupAsAlbum(String.valueOf(chatId), renderedImage);
                                                 //Loop through each images to send it to user
-                                                for(java.io.File img : renderedImage){
-                                                    if(img.exists()) {
-                                                        //apiClient.sendMessage(chatId, "Sending Images please wait...");
-                                                        apiClient.sendPhoto(chatId, img);
-
-                                                        try {
-                                                            Thread.sleep(300);
-                                                        }catch (InterruptedException e){
-                                                            Thread.currentThread().interrupt();
-                                                        }
-
-                                                    }else {
-                                                        System.err.println("[Error] Image file missing on disk: " + img.getAbsolutePath());
-                                                    }
-                                                }
+//                                                for(java.io.File img : renderedImage){
+//                                                    if(img.exists()) {
+//                                                        //apiClient.sendMessage(chatId, "Sending Images please wait...");
+//                                                        apiClient.sendPhoto(chatId, img);
+//
+//                                                        try {
+//                                                            Thread.sleep(300);
+//                                                        }catch (InterruptedException e){
+//                                                            Thread.currentThread().interrupt();
+//                                                        }
+//
+//                                                    }else {
+//                                                        System.err.println("[Error] Image file missing on disk: " + img.getAbsolutePath());
+//                                                    }
+//                                                }
                                                 apiClient.sendMessage(chatId, "All Pages sent successfullt!");
                                             }else {
                                                 apiClient.sendMessage(chatId, "Failed to render pages from this PDF.");
