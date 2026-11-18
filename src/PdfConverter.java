@@ -18,7 +18,7 @@ public class PdfConverter {
         File outputDir = new File(projectRoot,"extracted_pages");
         if(!outputDir.exists()){
             boolean created = outputDir.mkdirs();
-            System.out.println("[PdfConverter] Created Directory " + outputDir.getAbsolutePath() + "?" + created);
+           // System.out.println("[PdfConverter] Created Directory " + outputDir.getAbsolutePath() + "?" + created);
         }
 
         try(PDDocument document = Loader.loadPDF(pdfFile)) {
