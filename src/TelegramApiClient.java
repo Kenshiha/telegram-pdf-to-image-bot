@@ -93,7 +93,11 @@ public class TelegramApiClient {
 
             // Create a local temp file to store the downloaded file
 
-            java.io.File tempFile = new  java.io.File("downloaded_" + originalFileName);
+            java.io.File pdfDir = new java.io.File("downloaded_pdfs");
+            if(!pdfDir.exists()){
+                pdfDir.mkdirs();
+            }
+            java.io.File tempFile = new  java.io.File(pdfDir,"downloaded_" + originalFileName);
             // Read the incoming Bytes coming from telegram and stores them directly into temp file
             try(java.io.InputStream in = conn.getInputStream();
                  java.io.OutputStream out = new java.io.FileOutputStream(tempFile))  {
