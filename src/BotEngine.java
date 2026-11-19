@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 public class BotEngine {
 
     private final TelegramApiClient apiClient;
@@ -52,8 +54,15 @@ public class BotEngine {
                                         java.io.File downloadedPdf = apiClient.downloadPdfFile(filePath, fileName);
 
 
-                                        if(downloadedPdf != null && downloadedPdf.exists()){
+                                        if(downloadedPdf != null && downloadedPdf.exists()) {
                                             System.out.println("[Debug] Downloaded file size: " + downloadedPdf.length() + " bytes");
+
+                                            String projectRoot = System.getProperty("user.dir");
+                                            java.io.File joboutputdir = new java.io.File(
+                                                    new java.io.File(projectRoot, "extracted_pages"),
+                                                    chatId + "_" + System.currentTimeMillis()
+                                            );
+                                            java.util.List<java.io.File> renderedImage = new ArrayList<>();
 
 //                                            try {
 //                                                String fileContent = new String(java.nio.file.Files.readAllBytes(downloadedPdf.toPath()), java.nio.charset.StandardCharsets.UTF_8);
@@ -61,32 +70,36 @@ public class BotEngine {
 //                                            } catch (Exception e) {
 //                                                // Ignore if binary
 //                                            }
+                                            try {
+                                                renderedImage = PdfConverter.convertPdfToImages(downloadedPdf, joboutputdir);
 
-                                            java.util.List<java.io.File> renderedImage = PdfConverter.convertPdfToImages(downloadedPdf);
+                                                if (!renderedImage.isEmpty()) {
+                                                        apiClient.sendMessage(chatId, "Converted " + renderedImage.size() + " page(s). Sending images...");
 
-                                            if(!renderedImage.isEmpty()){
-                                                apiClient.sendMessage(chatId, "Converted " + renderedImage.size() + " page(s). Sending images...");
+                                                        apiClient.sendMediaGroupAsAlbum(String.valueOf(chatId), renderedImage);
 
-                                                apiClient.sendMediaGroupAsAlbum(String.valueOf(chatId), renderedImage);
-                                                //Loop through each images to send it to user
-//                                                for(java.io.File img : renderedImage){
-//                                                    if(img.exists()) {
-//                                                        //apiClient.sendMessage(chatId, "Sending Images please wait...");
-//                                                        apiClient.sendPhoto(chatId, img);
-//
-//                                                        try {
-//                                                            Thread.sleep(300);
-//                                                        }catch (InterruptedException e){
-//                                                            Thread.currentThread().interrupt();
-//                                                        }
-//
-//                                                    }else {
-//                                                        System.err.println("[Error] Image file missing on disk: " + img.getAbsolutePath());
-//                                                    }
-//                                                }
-                                                apiClient.sendMessage(chatId, "All Pages sent successfullt!");
-                                            }else {
-                                                apiClient.sendMessage(chatId, "Failed to render pages from this PDF.");
+
+                                                            //Loop through each images to send it to user
+            //                                                for(java.io.File img : renderedImage){
+            //                                                    if(img.exists()) {
+            //                                                        //apiClient.sendMessage(chatId, "Sending Images please wait...");
+            //                                                        apiClient.sendPhoto(chatId, img);
+            //
+            //                                                        try {
+            //                                                            Thread.sleep(300);
+            //                                                        }catch (InterruptedException e){
+            //                                                            Thread.currentThread().interrupt();
+            //                                                        }
+            //
+            //                                                    }else {
+            //                                                        System.err.println("[Error] Image file missing on disk: " + img.getAbsolutePath());
+            //                                                    }
+            //                                                }
+                                                }else {
+                                                        apiClient.sendMessage(chatId, "Could Not render any pages from that pdf");
+                                                }
+                                            }   finally {
+                                                PdfConverter.cleanupJobFiles(downloadedPdf, renderedImage, joboutputdir);
                                             }
 
                                         }else {

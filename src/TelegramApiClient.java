@@ -109,7 +109,7 @@ public class TelegramApiClient {
                 }
             }
 
-            System.out.println("[SYstem] File successfully downloaded locally: " + tempFile.getAbsolutePath());
+            System.out.println("[System] File successfully downloaded locally: " + tempFile.getAbsolutePath());
             return tempFile;
         }catch (Exception e){
             System.err.println("[ERROR] Failed to download file bytes: " + e.getMessage());
@@ -172,8 +172,7 @@ public class TelegramApiClient {
                     writer.append("Content-Type: image/png\r\n\r\n");
                     writer.flush();
 
-                    try {
-                        FileInputStream inputStream = new FileInputStream(file);
+                    try(FileInputStream inputStream = new FileInputStream(file)) {
                         byte[] buffer= new byte[4096];
                         int bytesRead;
                         while ((bytesRead = inputStream.read(buffer)) != -1){
