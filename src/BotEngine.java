@@ -64,12 +64,6 @@ public class BotEngine {
                                             );
                                             java.util.List<java.io.File> renderedImage = new ArrayList<>();
 
-//                                            try {
-//                                                String fileContent = new String(java.nio.file.Files.readAllBytes(downloadedPdf.toPath()), java.nio.charset.StandardCharsets.UTF_8);
-//                                                System.out.println("[Debug File Content]: " + fileContent);
-//                                            } catch (Exception e) {
-//                                                // Ignore if binary
-//                                            }
                                             try {
                                                 renderedImage = PdfConverter.convertPdfToImages(downloadedPdf, joboutputdir);
 
